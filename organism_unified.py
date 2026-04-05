@@ -194,6 +194,8 @@ class Agent:
         if self.ten > 0.25:
             self.cell.K += 0.1 * (self.cell.fast - self.inner_bias)
             self.talent  += 0.005
+        # Continuous gentle pull toward phi regardless of tension
+        self.cell.K += 0.005 * (PHI - self.cell.K)
         if self.ten > 0.6:
             self.fear += 0.02
         else:
@@ -205,7 +207,9 @@ class Agent:
         dV    = prime.gradient(self.r)
         f_rad = -gamma * dV + L_eff ** 2 / (self.r ** 3 + 1e-6)
         self.pr     += f_rad * dt
+        self.pr     *= 0.95          # radial damping — prevents orbital explosion
         self.r      += self.pr * dt
+        self.r       = min(self.r, 50.0)   # hard cap
         self.theta  += L_eff / (self.r ** 2 + 1e-6)
 
         # 4. Bounds
@@ -364,4 +368,4 @@ if __name__ == "__main__":
     print(f"K_c = {K_C:.4f}   φ = {PHI:.4f}")
     swarm = MorphAutopoieticSwarm(max_agents=80)
     swarm.run(steps=5000, plot_every=1000)
-  
+      
